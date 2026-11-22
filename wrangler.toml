@@ -1,0 +1,9 @@
+
+name = "scratch-rewards-api"
+main = "worker.js"
+compatibility_date = "2026-11-21"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "scratch-rewards-db"
+database_id = "4672885c-e538-442a-a882-503458df5880"
