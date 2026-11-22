@@ -1,51 +1,173 @@
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyAUKJ8V3q8VtDJI6STl7r69HNmt-xyLZUg",
-  authDomain: "scratch-rewards-949ac.firebaseapp.com",
-  projectId: "scratch-rewards-949ac",
-  storageBucket: "scratch-rewards-949ac.firebasestorage.app",
-  messagingSenderId: "210634759910",
-  appId: "1:210634759910:web:62558c949d8b54f5926527",
-  measurementId: "G-MMJM2YHM8S"
-};
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Scratch Rewards: juegos y recompensas.">
+  <title>Scratch Rewards | Gana puntos jugando</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
 
-document.getElementById("googleLogin").addEventListener("click", async function() {
-  const status = document.getElementById("loginStatus");
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <span class="logo">S</span> Scratch Rewards
+    </a>
+    <nav>
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#reglas">Reglas</a>
+      <a href="#google">Iniciar sesión</a>
+      <a href="contacto.html">Contacto</a>
+    </nav>
+  </header>
 
-  try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    const result = await auth.signInWithPopup(provider);
-    const idToken = await result.user.getIdToken();
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">SCRATCH REWARDS</span>
+        <h1>Raspa, acumula puntos y descubre tus recompensas.</h1>
+        <p>Disfruta de Scratch Rewards. Estamos preparando una experiencia para jugar y acumular puntos.</p>
+        <a class="button" href="#como-funciona">Conoce cómo funcionará</a>
+      </div>
 
-    const response = await fetch(
-      "https://scratch-rewards-api.j78588438.workers.dev/me",
-      {
-        method: "POST",
-        headers: {
-          "Authorization": "Bearer " + idToken,
-          "Content-Type": "application/json"
+      <div class="hero-card">
+        <div class="scratch">✦</div>
+        <p class="small">TU PRÓXIMA RECOMPENSA</p>
+        <strong>¡Buena suerte!</strong>
+        <span>Juega de forma responsable</span>
+      </div>
+    </section>
+
+    <section id="como-funciona" class="section">
+      <span class="eyebrow">ASÍ FUNCIONARÁ</span>
+      <h2>Tres pasos sencillos</h2>
+
+      <div class="steps">
+        <article>
+          <b>01</b>
+          <h3>Crea tu cuenta</h3>
+          <p>Accede con tu cuenta de Google.</p>
+        </article>
+
+        <article>
+          <b>02</b>
+          <h3>Juega y acumula</h3>
+          <p>Usa las tarjetas para raspar y ganar puntos cuando estén disponibles.</p>
+        </article>
+
+        <article>
+          <b>03</b>
+          <h3>Solicita tu recompensa</h3>
+          <p>Podrás solicitar recompensas cuando el servicio esté habilitado.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="reglas" class="section rules">
+      <div>
+        <span class="eyebrow">TRANSPARENCIA</span>
+        <h2>Reglas claras</h2>
+        <p>Los requisitos y métodos de pago se publicarán antes de habilitar las recompensas.</p>
+      </div>
+
+      <ul>
+        <li>Una cuenta por persona.</li>
+        <li>No se permiten cuentas duplicadas.</li>
+        <li>Los puntos no son dinero hasta que una recompensa sea aprobada.</li>
+        <li>Los anuncios dependerán de la autorización del proveedor.</li>
+      </ul>
+    </section>
+
+    <section id="google" class="section" style="text-align:center;">
+      <h2>Accede a Scratch Rewards</h2>
+      <p>Inicia sesión con tu cuenta de Google.</p>
+      <button id="googleLogin" type="button">Continuar con Google</button>
+      <p id="loginStatus"></p>
+    </section>
+
+    <section class="notice">
+      <p class="notice-text">
+        El registro, los juegos, los anuncios y los retiros todavía están en preparación.
+      </p>
+      <p class="notice-support">
+        Soporte: <a href="mailto:J78588438@gmail.com">J78588438@gmail.com</a>
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <div>
+      <a class="brand" href="index.html">
+        <span class="logo">S</span> Scratch Rewards
+      </a>
+      <p>Proyecto independiente de entretenimiento y recompensas.</p>
+    </div>
+
+    <div class="footer-links">
+      <a href="privacidad.html">Política de privacidad</a>
+      <a href="terminos.html">Términos y condiciones</a>
+      <a href="contacto.html">Contacto</a>
+    </div>
+
+    <small>© 2026 Scratch Rewards. Todos los derechos reservados.</small>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAUKJ8V3q8VtDJI6STl7r69HNmt-xyLZUg",
+      authDomain: "scratch-rewards-949ac.firebaseapp.com",
+      projectId: "scratch-rewards-949ac",
+      storageBucket: "scratch-rewards-949ac.firebasestorage.app",
+      messagingSenderId: "210634759910",
+      appId: "1:210634759910:web:62558c949d8b54f5926527",
+      measurementId: "G-MMJM2YHM8S"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    document.getElementById("googleLogin").addEventListener("click", async function() {
+      const status = document.getElementById("loginStatus");
+
+      try {
+        status.textContent = "Conectando...";
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const result = await auth.signInWithPopup(provider);
+        const idToken = await result.user.getIdToken();
+
+        const response = await fetch(
+          "https://scratch-rewards-api.j78588438.workers.dev/me",
+          {
+            method: "POST",
+            headers: {
+              "Authorization": "Bearer " + idToken,
+              "Content-Type": "application/json"
+            }
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "No se pudo conectar la cuenta");
         }
+
+        status.textContent =
+          "Bienvenido, " + result.user.displayName +
+          ". Puntos acumulados: " + data.user.points;
+
+      } catch (error) {
+        status.textContent = "Error: " + error.message;
       }
-    );
+    });
+  </script>
+</body>
+</html>
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "No se pudo conectar la cuenta");
-    }
-
-    status.textContent =
-      "Bienvenido, " + result.user.displayName +
-      ". Puntos acumulados: " + data.user.points;
-
-  } catch (error) {
-    status.textContent = "Error: " + error.message;
-  }
-});
-</script>
 
 
 
