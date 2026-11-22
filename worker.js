@@ -23,21 +23,28 @@ export default {
       return respond({ message: "Scratch Rewards API funcionando" });
     }
 
-    if (path === "/db-check") {
+    if (path === "/db-check" || path === "/db-schema") {
       try {
-        const result = await env.DB.prepare(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users','rewards','claims') ORDER BY name"
-        ).all();
+        const tables = ["users", "rewards", "claims"];
+        const schema = {};
+
+        for (const table of tables) {
+          const result = await env.DB.prepare(
+            `PRAGMA table_info(${table})`
+          ).all();
+
+          schema[table] = result.results;
+        }
 
         return respond({
           ok: true,
-          message: "Base de datos conectada",
-          tables: result.results.map(row => row.name)
+          message: "Estructura de base de datos revisada",
+          schema
         });
       } catch (error) {
         return respond({
           ok: false,
-          error: "No se pudo consultar la base de datos"
+          error: "No se pudo revisar la base de datos"
         }, 500);
       }
     }
@@ -45,4 +52,5 @@ export default {
     return respond({ error: "Ruta no encontrada" }, 404);
   }
 };
+
 
