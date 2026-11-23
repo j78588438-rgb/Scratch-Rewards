@@ -1,5 +1,6 @@
 
 const FIREBASE_API_KEY = "AIzaSyAUKJ8V3q8VtDJI6STl7r69HNmt-xyLZUg";
+const TURNSTILE_HOSTNAME = "scratch-rewards-web.pages.dev";
 
 async function verifyUser(request) {
   const authorization = request.headers.get("Authorization") || "";
@@ -7,9 +8,7 @@ async function verifyUser(request) {
     ? authorization.slice(7)
     : "";
 
-  if (!idToken) {
-    throw new Error("Falta iniciar sesión");
-  }
+  if (!idToken) throw new Error("Falta iniciar sesión");
 
   const verification = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
@@ -31,16 +30,41 @@ async function verifyUser(request) {
     throw new Error("No se pudo identificar la cuenta");
   }
 
-  return {
-    id: user.localId,
-    email: user.email
-  };
+  return { id: user.localId, email: user.email };
+}
+
+async function verifyTurnstile(token, request, env) {
+  if (!env.TURNSTILE_SECRET || !token) return false;
+
+  const formData = new FormData();
+  formData.append("secret", env.TURNSTILE_SECRET);
+  formData.append("response", token);
+
+  const ip = request.headers.get("CF-Connecting-IP");
+  if (ip) formData.append("remoteip", ip);
+
+  try {
+    const response = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      { method: "POST", body: formData }
+    );
+
+    if (!response.ok) return false;
+
+    const result = await response.json();
+
+    return result.success === true &&
+      result.hostname === TURNSTILE_HOSTNAME &&
+      result.action === "scratch";
+  } catch {
+    return false;
+  }
 }
 
 export default {
   async fetch(request, env) {
     const cors = {
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": "https://scratch-rewards-web.pages.dev",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization"
     };
@@ -48,11 +72,19 @@ export default {
     const respond = (data, status = 200) =>
       new Response(JSON.stringify(data), {
         status,
-        headers: { ...cors, "Content-Type": "application/json" }
+        headers: {
+          ...cors,
+          "Content-Type": "application/json"
+        }
       });
 
+    if (request.headers.get("Origin") &&
+        request.headers.get("Origin") !== cors["Access-Control-Allow-Origin"]) {
+      return respond({ error: "Origen no permitido" }, 403);
+    }
+
     if (request.method === "OPTIONS") {
-      return new Response(null, { headers: cors });
+      return new Response(null, { status: 204, headers: cors });
     }
 
     const path = new URL(request.url).pathname;
@@ -129,6 +161,21 @@ export default {
       }
 
       try {
+        const body = await request.json().catch(() => ({}));
+
+        const verified = await verifyTurnstile(
+          body.turnstileToken,
+          request,
+          env
+        );
+
+        if (!verified) {
+          return respond({
+            ok: false,
+            error: "Verificación de seguridad fallida. Inténtalo nuevamente."
+          }, 403);
+        }
+
         const user = await verifyUser(request);
 
         const account = await env.DB.prepare(
@@ -198,7 +245,6 @@ export default {
           pointsWon: points,
           totalPoints: updatedAccount.points
         });
-
       } catch (error) {
         return respond({
           error: error.message || "No se pudo realizar el raspado"
@@ -209,6 +255,7 @@ export default {
     return respond({ error: "Ruta no encontrada" }, 404);
   }
 };
+
 
 
 
