@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -103,7 +102,7 @@
     <div id="turnstileContainer">
       <div
         class="cf-turnstile"
-        data-sitekey="0x4AAAAAAG0Ni12KBR-dxy9R"
+        data-sitekey="0x4AAAAAAGONil2KBR-dxy9R"
         data-action="scratch"
         data-callback="onTurnstileSuccess"
         data-expired-callback="onTurnstileExpired"
@@ -170,21 +169,28 @@
   let currentUser = null;
   let turnstileToken = "";
 
+  function updateScratchButton() {
+    scratchButton.disabled = !(currentUser && turnstileToken);
+  }
+
   window.onTurnstileSuccess = function(token) {
     turnstileToken = token;
     scratchStatus.textContent = currentUser
       ? "Verificación completada. Ya puedes raspar."
       : "Verificación completada. Inicia sesión para jugar.";
+    updateScratchButton();
   };
 
   window.onTurnstileExpired = function() {
     turnstileToken = "";
     scratchStatus.textContent = "La verificación venció. Complétala otra vez.";
+    updateScratchButton();
   };
 
   window.onTurnstileError = function() {
     turnstileToken = "";
     scratchStatus.textContent = "No se pudo verificar. Recarga la página e inténtalo de nuevo.";
+    updateScratchButton();
   };
 
   async function connectAccount(user) {
@@ -212,7 +218,7 @@
       ? "Verificación completada. Ya puedes raspar."
       : "Completa la verificación de seguridad para jugar.";
 
-    scratchButton.disabled = false;
+    updateScratchButton();
   }
 
   auth.onAuthStateChanged(async function(user) {
@@ -221,6 +227,7 @@
     if (user) {
       loginButton.disabled = true;
       loginButton.textContent = "Sesión iniciada";
+      updateScratchButton();
 
       try {
         loginStatus.textContent = "Conectando...";
@@ -235,7 +242,7 @@
       loginStatus.textContent = "Todavía no has iniciado sesión.";
       pointsDisplay.textContent = "Puntos acumulados: 0";
       scratchStatus.textContent = "Inicia sesión y completa la verificación para jugar.";
-      scratchButton.disabled = true;
+      updateScratchButton();
     }
   });
 
@@ -257,11 +264,13 @@
 
     if (!turnstileToken) {
       scratchStatus.textContent = "Completa la verificación de seguridad primero.";
+      updateScratchButton();
       return;
     }
 
     const tokenToSend = turnstileToken;
     turnstileToken = "";
+    updateScratchButton();
 
     try {
       scratchButton.disabled = true;
@@ -300,7 +309,7 @@
       if (window.turnstile) {
         window.turnstile.reset();
       }
-      scratchButton.disabled = !currentUser;
+      updateScratchButton();
     }
   });
 </script>
