@@ -7,6 +7,7 @@
   <meta name="description" content="Scratch Rewards: juega, raspa y acumula puntos.">
   <title>Scratch Rewards | Gana puntos jugando</title>
   <link rel="stylesheet" href="styles.css">
+
   <style>
     body {
       margin: 0;
@@ -59,7 +60,16 @@
       font-weight: bold;
       color: #15803d;
     }
+    #turnstileContainer {
+      margin: 18px 0;
+    }
   </style>
+
+  <script
+    src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+    async
+    defer>
+  </script>
 </head>
 
 <body>
@@ -90,8 +100,19 @@
     <p>Gana entre 10 y 20 puntos por cada raspada.</p>
     <p>Debes esperar 10 minutos entre reclamaciones.</p>
 
+    <div id="turnstileContainer">
+      <div
+        class="cf-turnstile"
+        data-sitekey="0x4AAAAAAG0Ni12KBR-dxy9R"
+        data-action="scratch"
+        data-callback="onTurnstileSuccess"
+        data-expired-callback="onTurnstileExpired"
+        data-error-callback="onTurnstileError">
+      </div>
+    </div>
+
     <button id="scratchButton" disabled>Raspar ahora</button>
-    <p id="scratchStatus">Inicia sesión para jugar.</p>
+    <p id="scratchStatus">Inicia sesión y completa la verificación para jugar.</p>
   </section>
 
   <section>
@@ -103,8 +124,8 @@
   <section>
     <h2>¿Cómo funciona?</h2>
     <p>1. Inicia sesión con tu cuenta de Google.</p>
-    <p>2. Entra en Raspa normal.</p>
-    <p>3. Reclama tus puntos.</p>
+    <p>2. Completa la verificación de seguridad.</p>
+    <p>3. Entra en Raspa normal.</p>
     <p>4. Tus puntos se acumulan en tu cuenta.</p>
   </section>
 
@@ -147,6 +168,24 @@
   const scratchStatus = document.getElementById("scratchStatus");
 
   let currentUser = null;
+  let turnstileToken = "";
+
+  window.onTurnstileSuccess = function(token) {
+    turnstileToken = token;
+    scratchStatus.textContent = currentUser
+      ? "Verificación completada. Ya puedes raspar."
+      : "Verificación completada. Inicia sesión para jugar.";
+  };
+
+  window.onTurnstileExpired = function() {
+    turnstileToken = "";
+    scratchStatus.textContent = "La verificación venció. Complétala otra vez.";
+  };
+
+  window.onTurnstileError = function() {
+    turnstileToken = "";
+    scratchStatus.textContent = "No se pudo verificar. Recarga la página e inténtalo de nuevo.";
+  };
 
   async function connectAccount(user) {
     const idToken = await user.getIdToken();
@@ -169,7 +208,10 @@
 
     loginStatus.textContent = "Bienvenido, " + user.displayName;
     pointsDisplay.textContent = "Puntos acumulados: " + points;
-    scratchStatus.textContent = "Ya puedes jugar.";
+    scratchStatus.textContent = turnstileToken
+      ? "Verificación completada. Ya puedes raspar."
+      : "Completa la verificación de seguridad para jugar.";
+
     scratchButton.disabled = false;
   }
 
@@ -192,7 +234,7 @@
       loginButton.textContent = "Continuar con Google";
       loginStatus.textContent = "Todavía no has iniciado sesión.";
       pointsDisplay.textContent = "Puntos acumulados: 0";
-      scratchStatus.textContent = "Inicia sesión para jugar.";
+      scratchStatus.textContent = "Inicia sesión y completa la verificación para jugar.";
       scratchButton.disabled = true;
     }
   });
@@ -213,6 +255,14 @@
       return;
     }
 
+    if (!turnstileToken) {
+      scratchStatus.textContent = "Completa la verificación de seguridad primero.";
+      return;
+    }
+
+    const tokenToSend = turnstileToken;
+    turnstileToken = "";
+
     try {
       scratchButton.disabled = true;
       scratchStatus.textContent = "Procesando tu raspada...";
@@ -224,7 +274,10 @@
         headers: {
           "Authorization": "Bearer " + idToken,
           "Content-Type": "application/json"
-        }
+        },
+        body: JSON.stringify({
+          turnstileToken: tokenToSend
+        })
       });
 
       const data = await response.json();
@@ -233,19 +286,20 @@
         throw new Error(data.error || "No se pudo realizar la raspada.");
       }
 
-      const premio = data.reward ?? data.awardedPoints ?? data.pointsAwarded;
-      const total = data.totalPoints ?? data.user?.points ?? data.points;
+      const premio = data.pointsWon;
+      const total = data.totalPoints;
 
       if (typeof total === "number") {
         pointsDisplay.textContent = "Puntos acumulados: " + total;
       }
 
-      scratchStatus.textContent =
-        "¡Ganaste " + premio + " puntos!";
-
+      scratchStatus.textContent = "¡Ganaste " + premio + " puntos!";
     } catch (error) {
       scratchStatus.textContent = error.message;
     } finally {
+      if (window.turnstile) {
+        window.turnstile.reset();
+      }
       scratchButton.disabled = !currentUser;
     }
   });
@@ -253,6 +307,7 @@
 
 </body>
 </html>
+
 
 
 
